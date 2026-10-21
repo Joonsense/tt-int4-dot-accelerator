@@ -2,6 +2,8 @@
 
 ![GDS render of the sky130 layout](docs/gds_render.png)
 
+**[Try it in the browser: draw a digit and watch the chip's arithmetic classify it](https://joonsense.github.io/tt-int4-dot-accelerator/)** · [3D layout viewer](https://gds-viewer.tinytapeout.com/?pdk=sky130A&model=https%3A%2F%2Fjoonsense.github.io%2Ftt-int4-dot-accelerator%2Ftinytapeout.oas)
+
 A weight-stationary INT4 dot product accelerator for a single 1x1 [Tiny Tapeout](https://tinytapeout.com) tile
 (161 x 111.5 um, SkyWater sky130). Load 16 weights once, then stream inputs at one byte per clock:
 every byte carries two signed 4-bit values, so the chip does **2 multiply-accumulates per clock**.

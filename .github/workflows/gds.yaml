@@ -43,5 +43,30 @@ jobs:
     permissions:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: TinyTapeout/tt-gds-action/viewer@ttsky26d
+      # Same as TinyTapeout/tt-gds-action/viewer, but the site root is the interactive demo (demo/) instead of a redirect
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v7
+        with:
+          name: tt_submission
+          path: tt_submission
+      - uses: actions/download-artifact@v7
+        with:
+          name: gds_render
+          path: gh-pages
+      - name: Assemble site
+        run: |
+          cp tt_submission/*.gds gh-pages/tinytapeout.gds
+          cp tt_submission/*.oas gh-pages/tinytapeout.oas
+          cp demo/* gh-pages/
+          PDK=$(jq -r '.PDK' tt_submission/pdk.json)
+          sed -i "s/pdk=sky130A/pdk=$PDK/" gh-pages/index.html
+          ls -la gh-pages
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: gh-pages
+      - id: deployment
+        uses: actions/deploy-pages@v5
