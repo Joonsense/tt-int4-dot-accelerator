@@ -1,0 +1,9 @@
+{
+ "samples": 360,
+ "dot_products": 3600,
+ "mismatches": 0,
+ "chip_accuracy": 0.9556,
+ "float_accuracy": 0.9583,
+ "cycles": 115760,
+ "simulator": "icarus RTL"
+}
