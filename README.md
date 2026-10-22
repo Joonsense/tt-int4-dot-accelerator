@@ -23,6 +23,7 @@ Everything below is measured on the RTL, the post-layout gate-level netlist, or 
 | Timing | 50 MHz, setup slack +9.43 ns at the slow corner (ss, 100C, 1.60V), no hold violations |
 | Signoff | DRC 0, LVS 0, antenna 0, Tiny Tapeout precheck passed |
 | Gate-level tests | 6/6: protocol, host driver, 400 vectors with 20 weight reloads under random stalls and backpressure, chained dot products of 1 to 40 vectors, abort and reset recovery |
+| FPGA | builds for the iCE40UP5K Tiny Tapeout simulator board: 445 of 5,280 logic cells, 23.7 MHz max ([bitstream](https://github.com/Joonsense/tt-int4-dot-accelerator/releases/tag/fpga-v1), not tried on a board) |
 | Fault check | the same tests on a deliberately broken build: 6/6 fail |
 | Power (estimate) | about 1.05 mW at 50 MHz, typical corner (LibreLane report) |
 
