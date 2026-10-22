@@ -128,6 +128,23 @@ section .intro { color: var(--ink-2); max-width: 40em; margin: 0 0 32px; font-si
 .notes h3 { font-size: 18px; margin: 0 0 8px; }
 .notes p { margin: 0; color: var(--ink-2); }
 
+.inside { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.flow { width: 100%; height: auto; display: block; }
+.flow.narrow { display: none; }
+.flow text { font-family: "Schibsted Grotesk", system-ui, sans-serif; }
+.flow .t { font-size: 17px; fill: var(--ink); font-weight: 500; }
+.flow .n { font-size: 14.5px; fill: var(--ink-2); }
+.flow .w { font-size: 15px; fill: #fff; font-weight: 500; }
+.flow .box { fill: var(--wafer); stroke: var(--ink-2); stroke-width: 1.2; }
+.flow .lut { fill: var(--met1); }
+.flow .acc { fill: var(--met2); }
+.flow .reg { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
+.flow .led { fill: var(--panel); }
+.flow .ln { stroke: var(--ink-2); stroke-width: 1.2; fill: none; }
+.die { margin: 0; }
+.die img { width: 100%; max-width: 300px; display: block; border-radius: 6px; }
+.die figcaption { color: var(--ink-2); font-size: 15px; margin-top: 12px; max-width: 300px; }
+
 pre.code { background: var(--panel); color: #d8dee6; border-radius: 12px; padding: 18px 20px; overflow-x: auto; font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0; }
 .tool { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
 .tool p { color: var(--ink-2); margin: 0 0 14px; }
@@ -137,7 +154,7 @@ footer p { margin: 0 0 6px; max-width: 60em; }
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; grid-template-areas: "head" "device" "body"; row-gap: 24px; padding-top: 8px; }
-  .tool, .notes { grid-template-columns: 1fr; gap: 24px; }
+  .tool, .notes, .inside { grid-template-columns: 1fr; gap: 24px; }
 }
 @media (max-width: 620px) {
   body { font-size: 16px; }
@@ -148,6 +165,9 @@ footer p { margin: 0 0 6px; max-width: 60em; }
   .device-grid { grid-template-columns: 1fr; gap: 14px; }
   .out { flex-direction: row; gap: 12px; }
   .lead-h h1 { margin-bottom: 0; }
+  .flow.wide { display: none; }
+  .flow.narrow { display: block; }
+  .flow .t { font-size: 18px; } .flow .n { font-size: 16px; } .flow .w { font-size: 17px; }
   .seg .clock span:last-child { display: none; }
   .out .seg { flex: 0 0 36%; padding: 10px 12px 8px; }
   .out .scores { flex: 1; }
@@ -170,7 +190,7 @@ footer p { margin: 0 0 6px; max-width: 60em; }
 <div class="wrap">
   <header class="top">
     <span><b>Digit Chip</b>, an open silicon experiment</span>
-    <nav><a href="#precision">Fewer bits</a><a href="#path">0.005 to 80</a><a href="#measured">Measured</a><a href="https://github.com/Joonsense/tt-digit-classifier">Source</a></nav>
+    <nav><a href="#inside">Inside</a><a href="#precision">Fewer bits</a><a href="#path">0.005 to 80</a><a href="#measured">Measured</a><a href="https://github.com/Joonsense/tt-digit-classifier">Source</a></nav>
   </header>
 
   <main>
@@ -227,6 +247,54 @@ footer p { margin: 0 0 6px; max-width: 60em; }
       </div>
     </div>
   </div>
+
+  <section id="inside">
+    <h2>What happens in those 8 clocks</h2>
+    <p class="intro">Each row of pixels feeds all ten digits at once. The weights are not stored anywhere: they are constants, so each one became a handful of gates, and the chip never has to load them through its pins.</p>
+    <div class="inside">
+      <div>
+        <svg class="flow wide" viewBox="0 0 680 440" role="img" aria-labelledby="flowtitle flowdesc">
+          <title id="flowtitle">Datapath of the digit classifier</title>
+          <desc id="flowdesc">One row of 8 pixels enters per clock and is registered, then ten constant tables, one per digit, turn it into a row sum for each digit. Ten accumulators start at each digit's bias and add the eight row sums. The largest score wins in two stages, and a decoder drives the 7 segment display.</desc>
+          <rect class="box" x="20" y="14" width="414" height="40" rx="6"/><text class="t" x="34" y="39">8 pixels from ui_in</text>
+          <text class="n" x="456" y="39">one image row per clock</text>
+          <line class="ln" x1="227" y1="54" x2="227" y2="74"/>
+          <rect class="box" x="20" y="74" width="414" height="34" rx="6"/><text class="t" x="34" y="96">Input register</text>
+          <text class="n" x="456" y="96">keeps pad delay off the math</text>
+          <line class="ln" x1="38" y1="128" x2="416" y2="128"/><line class="ln" x1="227" y1="108" x2="227" y2="128"/>
+          <rect class="lut" x="20" y="150" width="36" height="52" rx="4"/><text class="w" x="38" y="181" text-anchor="middle">0</text><rect class="reg" x="20" y="218" width="36" height="18" rx="3"/><rect class="acc" x="20" y="252" width="36" height="52" rx="4"/><line class="ln" x1="38" y1="128" x2="38" y2="150"/><line class="ln" x1="38" y1="202" x2="38" y2="218"/><line class="ln" x1="38" y1="236" x2="38" y2="252"/><line class="ln" x1="38" y1="304" x2="38" y2="326"/><rect class="lut" x="62" y="150" width="36" height="52" rx="4"/><text class="w" x="80" y="181" text-anchor="middle">1</text><rect class="reg" x="62" y="218" width="36" height="18" rx="3"/><rect class="acc" x="62" y="252" width="36" height="52" rx="4"/><line class="ln" x1="80" y1="128" x2="80" y2="150"/><line class="ln" x1="80" y1="202" x2="80" y2="218"/><line class="ln" x1="80" y1="236" x2="80" y2="252"/><line class="ln" x1="80" y1="304" x2="80" y2="326"/><rect class="lut" x="104" y="150" width="36" height="52" rx="4"/><text class="w" x="122" y="181" text-anchor="middle">2</text><rect class="reg" x="104" y="218" width="36" height="18" rx="3"/><rect class="acc" x="104" y="252" width="36" height="52" rx="4"/><line class="ln" x1="122" y1="128" x2="122" y2="150"/><line class="ln" x1="122" y1="202" x2="122" y2="218"/><line class="ln" x1="122" y1="236" x2="122" y2="252"/><line class="ln" x1="122" y1="304" x2="122" y2="326"/><rect class="lut" x="146" y="150" width="36" height="52" rx="4"/><text class="w" x="164" y="181" text-anchor="middle">3</text><rect class="reg" x="146" y="218" width="36" height="18" rx="3"/><rect class="acc" x="146" y="252" width="36" height="52" rx="4"/><line class="ln" x1="164" y1="128" x2="164" y2="150"/><line class="ln" x1="164" y1="202" x2="164" y2="218"/><line class="ln" x1="164" y1="236" x2="164" y2="252"/><line class="ln" x1="164" y1="304" x2="164" y2="326"/><rect class="lut" x="188" y="150" width="36" height="52" rx="4"/><text class="w" x="206" y="181" text-anchor="middle">4</text><rect class="reg" x="188" y="218" width="36" height="18" rx="3"/><rect class="acc" x="188" y="252" width="36" height="52" rx="4"/><line class="ln" x1="206" y1="128" x2="206" y2="150"/><line class="ln" x1="206" y1="202" x2="206" y2="218"/><line class="ln" x1="206" y1="236" x2="206" y2="252"/><line class="ln" x1="206" y1="304" x2="206" y2="326"/><rect class="lut" x="230" y="150" width="36" height="52" rx="4"/><text class="w" x="248" y="181" text-anchor="middle">5</text><rect class="reg" x="230" y="218" width="36" height="18" rx="3"/><rect class="acc" x="230" y="252" width="36" height="52" rx="4"/><line class="ln" x1="248" y1="128" x2="248" y2="150"/><line class="ln" x1="248" y1="202" x2="248" y2="218"/><line class="ln" x1="248" y1="236" x2="248" y2="252"/><line class="ln" x1="248" y1="304" x2="248" y2="326"/><rect class="lut" x="272" y="150" width="36" height="52" rx="4"/><text class="w" x="290" y="181" text-anchor="middle">6</text><rect class="reg" x="272" y="218" width="36" height="18" rx="3"/><rect class="acc" x="272" y="252" width="36" height="52" rx="4"/><line class="ln" x1="290" y1="128" x2="290" y2="150"/><line class="ln" x1="290" y1="202" x2="290" y2="218"/><line class="ln" x1="290" y1="236" x2="290" y2="252"/><line class="ln" x1="290" y1="304" x2="290" y2="326"/><rect class="lut" x="314" y="150" width="36" height="52" rx="4"/><text class="w" x="332" y="181" text-anchor="middle">7</text><rect class="reg" x="314" y="218" width="36" height="18" rx="3"/><rect class="acc" x="314" y="252" width="36" height="52" rx="4"/><line class="ln" x1="332" y1="128" x2="332" y2="150"/><line class="ln" x1="332" y1="202" x2="332" y2="218"/><line class="ln" x1="332" y1="236" x2="332" y2="252"/><line class="ln" x1="332" y1="304" x2="332" y2="326"/><rect class="lut" x="356" y="150" width="36" height="52" rx="4"/><text class="w" x="374" y="181" text-anchor="middle">8</text><rect class="reg" x="356" y="218" width="36" height="18" rx="3"/><rect class="acc" x="356" y="252" width="36" height="52" rx="4"/><line class="ln" x1="374" y1="128" x2="374" y2="150"/><line class="ln" x1="374" y1="202" x2="374" y2="218"/><line class="ln" x1="374" y1="236" x2="374" y2="252"/><line class="ln" x1="374" y1="304" x2="374" y2="326"/><rect class="lut" x="398" y="150" width="36" height="52" rx="4"/><text class="w" x="416" y="181" text-anchor="middle">9</text><rect class="reg" x="398" y="218" width="36" height="18" rx="3"/><rect class="acc" x="398" y="252" width="36" height="52" rx="4"/><line class="ln" x1="416" y1="128" x2="416" y2="150"/><line class="ln" x1="416" y1="202" x2="416" y2="218"/><line class="ln" x1="416" y1="236" x2="416" y2="252"/><line class="ln" x1="416" y1="304" x2="416" y2="326"/>
+          <text class="n" x="456" y="172">10 constant tables:</text><text class="n" x="456" y="190">weights times pixels</text>
+          <text class="n" x="456" y="231">row sum register</text>
+          <text class="n" x="456" y="274">10 accumulators: start at</text><text class="n" x="456" y="292">the bias, add 8 row sums</text>
+          <line class="ln" x1="38" y1="326" x2="416" y2="326"/><line class="ln" x1="227" y1="326" x2="227" y2="340"/>
+          <rect class="box" x="20" y="340" width="414" height="36" rx="6"/><text class="t" x="34" y="363">Largest score wins, in two stages</text>
+          <text class="n" x="456" y="363">ties go to the lower digit</text>
+          <line class="ln" x1="227" y1="376" x2="227" y2="392"/>
+          <rect class="led" x="20" y="392" width="414" height="36" rx="6"/><text class="w" x="34" y="415">7 segment decoder, uo_out</text>
+          <text class="n" x="456" y="415">digit out 4 clocks after row 8</text>
+        </svg>
+        <svg class="flow narrow" viewBox="0 0 440 482" role="img" aria-labelledby="flowtitle2"><title id="flowtitle2">Datapath of the digit classifier</title>
+          <rect class="box" x="13" y="8" width="414" height="40" rx="6"/><text class="t" x="27" y="33">8 pixels from ui_in, one row per clock</text>
+          <line class="ln" x1="220" y1="48" x2="220" y2="64"/>
+          <rect class="box" x="13" y="64" width="414" height="36" rx="6"/><text class="t" x="27" y="87">Input register</text>
+          <text class="n" x="13" y="126">10 constant tables: weights times pixels</text>
+          <text class="n" x="13" y="205">row sum registers</text>
+          <text class="n" x="13" y="253">10 accumulators: bias plus 8 row sums</text>
+          <rect class="lut" x="13" y="136" width="36" height="46" rx="4"/><text class="w" x="31" y="165" text-anchor="middle">0</text><rect class="reg" x="13" y="214" width="36" height="16" rx="3"/><rect class="acc" x="13" y="262" width="36" height="46" rx="4"/><rect class="lut" x="55" y="136" width="36" height="46" rx="4"/><text class="w" x="73" y="165" text-anchor="middle">1</text><rect class="reg" x="55" y="214" width="36" height="16" rx="3"/><rect class="acc" x="55" y="262" width="36" height="46" rx="4"/><rect class="lut" x="97" y="136" width="36" height="46" rx="4"/><text class="w" x="115" y="165" text-anchor="middle">2</text><rect class="reg" x="97" y="214" width="36" height="16" rx="3"/><rect class="acc" x="97" y="262" width="36" height="46" rx="4"/><rect class="lut" x="139" y="136" width="36" height="46" rx="4"/><text class="w" x="157" y="165" text-anchor="middle">3</text><rect class="reg" x="139" y="214" width="36" height="16" rx="3"/><rect class="acc" x="139" y="262" width="36" height="46" rx="4"/><rect class="lut" x="181" y="136" width="36" height="46" rx="4"/><text class="w" x="199" y="165" text-anchor="middle">4</text><rect class="reg" x="181" y="214" width="36" height="16" rx="3"/><rect class="acc" x="181" y="262" width="36" height="46" rx="4"/><rect class="lut" x="223" y="136" width="36" height="46" rx="4"/><text class="w" x="241" y="165" text-anchor="middle">5</text><rect class="reg" x="223" y="214" width="36" height="16" rx="3"/><rect class="acc" x="223" y="262" width="36" height="46" rx="4"/><rect class="lut" x="265" y="136" width="36" height="46" rx="4"/><text class="w" x="283" y="165" text-anchor="middle">6</text><rect class="reg" x="265" y="214" width="36" height="16" rx="3"/><rect class="acc" x="265" y="262" width="36" height="46" rx="4"/><rect class="lut" x="307" y="136" width="36" height="46" rx="4"/><text class="w" x="325" y="165" text-anchor="middle">7</text><rect class="reg" x="307" y="214" width="36" height="16" rx="3"/><rect class="acc" x="307" y="262" width="36" height="46" rx="4"/><rect class="lut" x="349" y="136" width="36" height="46" rx="4"/><text class="w" x="367" y="165" text-anchor="middle">8</text><rect class="reg" x="349" y="214" width="36" height="16" rx="3"/><rect class="acc" x="349" y="262" width="36" height="46" rx="4"/><rect class="lut" x="391" y="136" width="36" height="46" rx="4"/><text class="w" x="409" y="165" text-anchor="middle">9</text><rect class="reg" x="391" y="214" width="36" height="16" rx="3"/><rect class="acc" x="391" y="262" width="36" height="46" rx="4"/>
+          <line class="ln" x1="220" y1="308" x2="220" y2="330"/>
+          <rect class="box" x="13" y="330" width="414" height="40" rx="6"/><text class="t" x="27" y="355">Largest score wins, in two stages</text>
+          <text class="n" x="13" y="392">ties go to the lower digit</text>
+          <line class="ln" x1="220" y1="370" x2="220" y2="408"/>
+          <rect class="led" x="13" y="408" width="414" height="40" rx="6"/><text class="w" x="27" y="433">7 segment decoder, uo_out</text>
+          <text class="n" x="13" y="472">the digit is out 4 clocks after row 8</text>
+        </svg>
+      </div>
+      <figure class="die">
+        <img src="layout.jpg" width="720" height="1009" alt="The routed sky130 layout of the digit classifier, two Tiny Tapeout tiles" loading="lazy">
+        <figcaption>The real layout: two Tiny Tapeout tiles, 161 by 225 µm of sky130, 75% of the area in standard cells. <a href="https://gds-viewer.tinytapeout.com/?pdk=sky130A&amp;model=https%3A%2F%2Fjoonsense.github.io%2Ftt-digit-classifier%2Ftinytapeout.oas">Open it in 3D</a>.</figcaption>
+      </figure>
+    </div>
+  </section>
 
   <section id="precision">
     <h2>Fewer bits per pixel, more work per pin</h2>
@@ -313,7 +381,7 @@ jobs:
   const segs = [...document.querySelectorAll('.seg .s')];
   const scoresEl = document.getElementById('scores'), verdict = document.getElementById('verdict');
   const clk = document.getElementById('clk'), clockr = document.getElementById('clockr');
-  let counts = null, sample = null, timer = null;
+  let counts = null, sample = null, timer = null, autoplayed = false;
 
   const bars = [];
   for (let c = 0; c < 10; c++) {
@@ -405,7 +473,8 @@ jobs:
     clockr.textContent = '8 + 4 clocks';
     if (sample !== null) {
       const label = MODELS.a1.labels[sample];
-      verdict.innerHTML = 'Test image ' + sample + ' is a <b>' + label + '</b>. ' + (best === label ? 'Correct.' : 'Missed.');
+      verdict.innerHTML = 'Test image ' + sample + ' is a <b>' + label + '</b>. ' + (best === label ? 'Correct.' : 'Missed.') + (autoplayed ? ' Now draw your own.' : '');
+      autoplayed = false;
     } else verdict.textContent = 'One linear layer at 91.4%: messy digits can fool it.';
   }
   function clearOut() { clearTimeout(timer); show7(null); setScores(null); setPins(null); rowmark.style.opacity = 0; clk.textContent = 'idle'; clockr.textContent = ''; verdict.textContent = ''; }
@@ -457,6 +526,12 @@ jobs:
   chart.appendChild(axis);
 
   precision();
+  if (!reduce) setTimeout(() => {
+    if (counts !== null || sample !== null || drawing) return;
+    sample = 0; hint.style.display = 'none';   // test image 0, a 7: the same one as the share card
+    paintSample(MODELS.a1.inputs[0]); classify();
+    autoplayed = true;
+  }, 900);
 })();
 </script>
 </body>
