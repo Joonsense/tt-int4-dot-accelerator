@@ -58,21 +58,33 @@ img.render { width: 100%; border-radius: 8px; border: 1px solid var(--line); bac
 .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; vertical-align: middle; }
 .tag.warn { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
 footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0 0 8px; background: var(--panel); }
+.seg button { border: 0; border-radius: 0; padding: 9px 14px; background: transparent; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.modeline { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Draw a digit. A 161 x 111 µm chip classifies it.</h1>
-  <p class="lede">This is a weight stationary INT4 dot product accelerator that fits one
-    <a href="https://tinytapeout.com">Tiny Tapeout</a> tile on SkyWater sky130. It does 2 multiply accumulates per clock.
-    The page runs the chip's exact integer arithmetic in your browser: 4 bit weights, 4 bit pixels, a 20 bit saturated sum.
-    An AI agent pipeline designed and verified it. <b>It has not been fabricated.</b></p>
+  <p class="lede">Weight stationary dot product accelerators that each fit one
+    <a href="https://tinytapeout.com">Tiny Tapeout</a> tile on SkyWater sky130, with 4 bit weights kept on chip.
+    Only 8 data pins feed the chip, so the one lever left is how many bits each pixel gets: fewer bits, more multiply accumulates per clock.
+    The page runs each chip's exact integer arithmetic in your browser. An AI agent pipeline designed and verified them. <b>None has been fabricated.</b></p>
+
+  <div class="seg" role="group" aria-label="Activation precision">
+    <button data-mode="int4" aria-pressed="true">4 bit pixels</button>
+    <button data-mode="a2" aria-pressed="false">2 bit</button>
+    <button data-mode="a1" aria-pressed="false">1 bit</button>
+  </div>
+  <p class="modeline" id="modeline"></p>
 
   <div class="stats">
-    <div class="stat"><b>2.0</b><span>INT4 MAC per clock</span></div>
-    <div class="stat"><b>+9.43 ns</b><span>slack at 50 MHz, slow corner</span></div>
-    <div class="stat"><b>0 / 0</b><span>DRC / LVS errors</span></div>
-    <div class="stat"><b>3,600</b><span>dot products bit identical on RTL</span></div>
+    <div class="stat"><b id="s-mac">2.0</b><span>MAC per clock</span></div>
+    <div class="stat"><b id="s-acc">95.56%</b><span>test accuracy (360 images)</span></div>
+    <div class="stat"><b id="s-clk">115,760</b><span>chip clocks for all 360 images</span></div>
+    <div class="stat"><b id="s-proof">3,600</b><span id="s-proof-l">dot products bit identical on RTL</span></div>
   </div>
 
   <div class="grid">
@@ -85,7 +97,7 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
       </div>
       <div class="mini">
         <canvas id="grid8" width="8" height="8"></canvas>
-        <p>What the chip sees: 8 x 8 pixels, each 0 to 7 (4 bit). Two pixels per byte, 32 bytes per image.</p>
+        <p id="sees">What the chip sees: 8 x 8 pixels, each 0 to 7 (4 bit). Two pixels per byte, 32 bytes per image.</p>
       </div>
     </div>
 
@@ -104,27 +116,24 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
     <div class="card">
       <h2>Bytes on <code>ui_in[7:0]</code></h2>
       <pre id="bytes">-</pre>
-      <p class="small">Low nibble first. The host loads each class's 64 weights in chunks (LOAD pin), then streams pixel bytes at one byte per clock.
-        Each byte carries two products, so one clock retires 2 MACs. Bias and argmax run on the host.</p>
+      <p class="small" id="bytes-note"></p>
     </div>
     <div class="card">
       <h2>The layout</h2>
       <img class="render" src="gds_render.png" alt="GDS render of the sky130 layout" loading="lazy">
-      <p class="small"><a id="viewer" href="#">Open the 3D layout viewer</a> · 76.9% placement utilization · about 1.05 mW at 50 MHz (estimate)</p>
+      <p class="small"><a id="viewer" href="#">Open the 3D layout viewer</a> · <span id="layout-note"></span></p>
     </div>
   </div>
 
   <div class="card" style="margin-top:20px">
     <h2>What is measured and what is not</h2>
-    <p class="small">Measured: for the 360 test images, every one of the 3,600 dot products the RTL produced matched Python bit for bit
-      (95.56% accuracy, 115,760 chip clocks for the whole batch). The layout passed the official Tiny Tapeout flow with DRC 0, LVS 0, antenna 0,
-      and the post layout gate netlist passed 6 of 6 stress tests. <b>Random test image</b> shows those verified dot products.</p>
+    <p class="small" id="measured"></p>
     <p class="small">Modeled: a digit you draw is classified by a JavaScript copy of the same integer math, not a simulation of the netlist.
       Not measured: silicon, and the RP2040 PIO host on a real demo board (co simulated at about 16 MHz chip clock).</p>
   </div>
 
   <footer>
-    Source, tests and CI: <a href="https://github.com/Joonsense/tt-int4-dot-accelerator">github.com/Joonsense/tt-int4-dot-accelerator</a> ·
+    Source, tests and CI: <a href="https://github.com/Joonsense/tt-int4-dot-accelerator">4 bit</a>, <a href="https://github.com/Joonsense/tt-lowbit-dot-accelerator">2 bit and 1 bit</a> ·
     earlier versions: <a href="https://github.com/Joonsense/tt-pin-dot-accelerator">INT8 pin</a>, <a href="https://github.com/Joonsense/tt-uart-dot-accelerator">UART</a> ·
     digits data: scikit-learn load_digits (UCI optdigits, CC BY 4.0) · Apache 2.0
   </footer>
@@ -132,7 +141,22 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
 <script src="model.js"></script>
 <script>
 (function () {
-  const M = window.MODEL, LIMIT = (1 << 19) - 1;
+  // Per design: measured numbers only. Fill-ins marked pending stay visible as pending, never guessed.
+  const MODES = {
+    int4: { bits: 4, mac: '2.0', clocks: '115,760', proof: '3,600', proofLabel: 'dot products bit identical on RTL',
+      line: '4 bit pixels, two per byte. The published INT4 tile.',
+      layout: '76.9% placement utilization · +9.43 ns slack at 50 MHz, slow corner · DRC 0, LVS 0',
+      measured: 'Measured: all 3,600 dot products for the 360 test images matched Python bit for bit on the RTL (115,760 chip clocks). The layout passed the official Tiny Tapeout flow (DRC 0, LVS 0, antenna 0) and the post layout gate netlist passed 6 of 6 stress tests.' },
+    a2: { bits: 2, mac: '4.0', clocks: '58,120', proof: '3,600', proofLabel: 'dot products bit identical on RTL',
+      line: '2 bit pixels, four per byte: twice the work per clock for 0.3 points of accuracy.',
+      layout: 'its own 1x1 tile (render above is the 4 bit design) · 73.1% utilization · +6.29 ns slack at 50 MHz, slow corner · DRC 0, LVS 0',
+      measured: 'Measured: all 3,600 dot products matched Python bit for bit on the RTL (58,120 chip clocks, half the 4 bit design). The layout passed the official Tiny Tapeout flow and the gate netlist passed 7 of 7 tests including this classifier.' },
+    a1: { bits: 1, mac: '8.0', clocks: '29,320', proof: '3,600', proofLabel: 'dot products bit identical on RTL',
+      line: '1 bit pixels, eight per byte: 4x the 4 bit design, and accuracy drops to 91%.',
+      layout: 'its own 1x1 tile (render above is the 4 bit design) · 82.5% utilization · +5.52 ns slack at 50 MHz, slow corner · DRC 0, LVS 0',
+      measured: 'Measured: all 3,600 dot products matched Python bit for bit on the RTL (29,320 chip clocks, a quarter of the 4 bit design). The layout passed the official Tiny Tapeout flow, the gate netlist passed 7 of 7 tests including this classifier, and a k-induction proof shows the output queue never drops a result.' }
+  };
+  let mode = 'int4', M = window.MODELS.int4, counts = null, sampleIndex = null;
   const pad = document.getElementById('pad'), ctx = pad.getContext('2d');
   const g8 = document.getElementById('grid8').getContext('2d');
   const barsEl = document.getElementById('bars');
@@ -147,25 +171,51 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
     r.innerHTML = '<span>' + c + '</span><div class="track"><div class="fill"></div></div><span class="v">-</span>';
     barsEl.appendChild(r); rows.push(r);
   }
+  const top = () => (1 << MODES[mode].bits) - 1;
+  const perByte = () => 8 / MODES[mode].bits;
+
+  function setMode(next) {
+    mode = next; M = window.MODELS[mode];
+    const c = MODES[mode];
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    document.getElementById('modeline').textContent = c.line;
+    document.getElementById('s-mac').textContent = c.mac;
+    document.getElementById('s-acc').textContent = (M.accuracy * 100).toFixed(2) + '%';
+    document.getElementById('s-clk').textContent = c.clocks;
+    document.getElementById('s-proof').textContent = c.proof;
+    document.getElementById('s-proof-l').textContent = c.proofLabel;
+    document.getElementById('layout-note').textContent = c.layout;
+    document.getElementById('measured').textContent = c.measured;
+    document.getElementById('sees').textContent = 'What the chip sees: 8 x 8 pixels, each 0 to ' + top() + ' (' + c.bits + ' bit). ' +
+      perByte() + ' pixels per byte, ' + (64 / perByte()) + ' bytes per image.';
+    document.getElementById('bytes-note').textContent = 'First pixel in the lowest bits. The host loads each class\'s 64 four bit weights in chunks (LOAD pin), ' +
+      'then streams pixel bytes at one byte per clock. Each byte carries ' + perByte() + ' products, so one clock retires ' + perByte() + ' MACs. Bias and argmax run on the host.';
+    if (sampleIndex !== null) { resetPad(); paintPixels(M.inputs[sampleIndex]); run(M.inputs[sampleIndex], sampleIndex); }
+    else if (counts) run(quantize(counts), null);
+  }
+  document.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 
   function resetPad() { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, pad.width, pad.height); }
   resetPad();
-  let drawing = false, last = null, dirty = false;
+  let drawing = false, last = null;
   function pos(e) { const b = pad.getBoundingClientRect(); return [(e.clientX - b.left) * pad.width / b.width, (e.clientY - b.top) * pad.height / b.height]; }
-  pad.addEventListener('pointerdown', e => { drawing = true; last = pos(e); pad.setPointerCapture(e.pointerId); stroke(last, last); });
+  pad.addEventListener('pointerdown', e => {
+    if (sampleIndex !== null) { resetPad(); sampleIndex = null; }
+    drawing = true; last = pos(e); pad.setPointerCapture(e.pointerId); stroke(last, last);
+  });
   pad.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e); stroke(last, p); last = p; });
-  window.addEventListener('pointerup', () => { if (drawing) { drawing = false; run(fromPad(), null); } });
+  window.addEventListener('pointerup', () => { if (drawing) { drawing = false; counts = fromPad(); run(quantize(counts), null); } });
   function stroke(a, b) {
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 30; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); dirty = true;
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
   }
-  document.getElementById('clear').onclick = () => { resetPad(); dirty = false; show8(new Array(64).fill(0)); clearOut(); };
+  document.getElementById('clear').onclick = () => { resetPad(); counts = null; sampleIndex = null; show8(new Array(64).fill(0)); clearOut(); };
   document.getElementById('sample').onclick = () => {
-    const k = Math.floor(Math.random() * M.inputs.length);
-    resetPad(); paintPixels(M.inputs[k]); run(M.inputs[k], k);
+    sampleIndex = Math.floor(Math.random() * M.inputs.length); counts = null;
+    resetPad(); paintPixels(M.inputs[sampleIndex]); run(M.inputs[sampleIndex], sampleIndex);
   };
 
-  // optdigits style: fit the ink box to 32 x 32, threshold, count ink in 4 x 4 blocks (0..16), then scale to 0..7
+  // optdigits style: fit the ink box to 32 x 32, threshold, count ink in 4 x 4 blocks (0..16)
   function fromPad() {
     const src = ctx.getImageData(0, 0, pad.width, pad.height).data, W = pad.width, H = pad.height;
     let x0 = W, y0 = H, x1 = -1, y1 = -1;
@@ -177,27 +227,32 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
     const tmp = document.createElement('canvas'); tmp.width = tmp.height = 32;
     const t = tmp.getContext('2d'); t.fillStyle = '#000'; t.fillRect(0, 0, 32, 32); t.imageSmoothingEnabled = true;
     t.drawImage(pad, x0, y0, w, h, (32 - dw) / 2, (32 - dh) / 2, dw, dh);
-    const d = t.getImageData(0, 0, 32, 32).data, px = [];
+    const d = t.getImageData(0, 0, 32, 32).data, n16 = [];
     for (let by = 0; by < 8; by++) for (let bx = 0; bx < 8; bx++) {
       let n = 0;
       for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if (d[((by * 4 + y) * 32 + bx * 4 + x) * 4] > 100) n++;
-      px.push(Math.round(n * M.pixel_scale));
+      n16.push(n);
     }
-    return px;
+    return n16;
   }
+  const quantize = n16 => n16.map(n => Math.round(n * M.pixel_scale));
   function paintPixels(px) {
     const s = pad.width / 8;
-    for (let i = 0; i < 64; i++) { const v = Math.round(px[i] / 7 * 255); ctx.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; ctx.fillRect((i % 8) * s, Math.floor(i / 8) * s, s, s); }
+    for (let i = 0; i < 64; i++) { const v = Math.round(px[i] / top() * 255); ctx.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; ctx.fillRect((i % 8) * s, Math.floor(i / 8) * s, s, s); }
   }
   function show8(px) {
     const img = g8.createImageData(8, 8);
-    for (let i = 0; i < 64; i++) { const v = Math.round(px[i] / 7 * 255); img.data.set([v, v, v, 255], i * 4); }
+    for (let i = 0; i < 64; i++) { const v = Math.round(px[i] / top() * 255); img.data.set([v, v, v, 255], i * 4); }
     g8.putImageData(img, 0, 0);
   }
-  function sat(v) { return Math.max(-LIMIT - 1, Math.min(LIMIT, v)); }
+  function sat(v) { const limit = (1 << (MODES[mode].bits === 4 ? 19 : 15)) - 1; return Math.max(-limit - 1, Math.min(limit, v)); }   // 20 bit and 16 bit result
   function hex(px) {
-    const out = [];
-    for (let i = 0; i < 64; i += 2) out.push((((px[i + 1] & 15) << 4) | (px[i] & 15)).toString(16).padStart(2, '0'));
+    const out = [], b = MODES[mode].bits, per = perByte();
+    for (let i = 0; i < 64; i += per) {
+      let v = 0;
+      for (let j = 0; j < per; j++) v |= (px[i + j] & ((1 << b) - 1)) << (b * j);
+      out.push(v.toString(16).padStart(2, '0'));
+    }
     return out.join(' ');
   }
   function clearOut() {
@@ -210,7 +265,7 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
     show8(px);
     if (px.every(v => v === 0)) { clearOut(); return; }
     const dots = M.weights.map(w => sat(w.reduce((s, wi, i) => s + wi * px[i], 0)));
-    if (k !== null && dots.some((d, c) => d !== M.dots[k][c])) console.warn('model mismatch', k);
+    if (k !== null && dots.some((d, c) => d !== M.dots[k][c])) console.warn('model mismatch', mode, k);
     const logits = dots.map((d, c) => d + M.bias[c]);
     const best = logits.indexOf(Math.max(...logits));
     const lo = Math.min(...logits), hi = Math.max(...logits);
@@ -221,11 +276,17 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
     });
     document.getElementById('verdict').textContent = best;
     const note = document.getElementById('note');
-    if (k === null) note.textContent = 'Modeled in the browser with the chip\'s integer math. It is one linear layer (95.6% on the test set), so messy drawings fool it.';
-    else note.innerHTML = 'Test image #' + k + ', label ' + M.labels[k] + (best === M.labels[k] ? ', correct.' : ', <b>miss</b>.') + ' These 10 dot products are the ones the RTL produced.';
+    const pct = (M.accuracy * 100).toFixed(1) + '%';
+    if (k === null) note.textContent = 'Modeled in the browser with this chip\'s integer math. It is one linear layer (' + pct + ' on the test set), so messy drawings fool it.';
+    else note.innerHTML = 'Test image #' + k + ', label ' + M.labels[k] + (best === M.labels[k] ? ', correct.' : ', <b>miss</b>.') +
+      (MODES[mode].proof === 'pending' ? ' Same integer math as the RTL.' : ' These 10 dot products are the ones the RTL produced.');
     document.getElementById('bytes').textContent = hex(px);
-    document.getElementById('cost').textContent = '10 dot products of length 64 = 640 INT4 MACs. In the measured 360 image batch the chip spent 115,760 clocks, about 322 clocks or 6.4 µs per image at 50 MHz.';
+    const c = MODES[mode];
+    document.getElementById('cost').textContent = '10 dot products of length 64 = 640 MACs, ' + (64 / perByte()) + ' pixel bytes per class.' +
+      (c.clocks === 'pending' ? '' : ' In the measured 360 image batch the chip spent ' + c.clocks + ' clocks, about ' +
+        Math.round(parseInt(c.clocks.replace(/,/g, '')) / 360) + ' clocks per image.');
   }
+  setMode('int4');
   document.getElementById('sample').click();
 })();
 </script>
