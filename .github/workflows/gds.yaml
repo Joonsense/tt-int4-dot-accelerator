@@ -52,7 +52,6 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: tt_submission
-          path: tt_submission
       - uses: actions/download-artifact@v7
         with:
           name: gds_render
