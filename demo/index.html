@@ -133,7 +133,7 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
   </div>
 
   <footer>
-    Source, tests and CI: <a href="https://github.com/Joonsense/tt-int4-dot-accelerator">4 bit</a>, <a href="https://github.com/Joonsense/tt-lowbit-dot-accelerator">2 bit and 1 bit</a> ·
+    Source, tests and CI: <a href="https://github.com/Joonsense/tt-int4-dot-accelerator">4 bit</a>, <a href="https://github.com/Joonsense/tt-lowbit-dot-accelerator">2 bit and 1 bit</a>, <a href="https://github.com/Joonsense/tt-digit-classifier">the model as logic</a> · <a href="https://github.com/Joonsense/tt-fit">tt-fit</a> ·
     earlier versions: <a href="https://github.com/Joonsense/tt-pin-dot-accelerator">INT8 pin</a>, <a href="https://github.com/Joonsense/tt-uart-dot-accelerator">UART</a> ·
     digits data: scikit-learn load_digits (UCI optdigits, CC BY 4.0) · Apache 2.0
   </footer>
@@ -152,7 +152,7 @@ footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
       layout: 'its own 1x1 tile (render above is the 4 bit design) · 73.1% utilization · +6.29 ns slack at 50 MHz, slow corner · DRC 0, LVS 0',
       measured: 'Measured: all 3,600 dot products matched Python bit for bit on the RTL (58,120 chip clocks, half the 4 bit design). The layout passed the official Tiny Tapeout flow and the gate netlist passed 7 of 7 tests including this classifier.' },
     a1: { bits: 1, mac: '8.0', clocks: '29,320', proof: '3,600', proofLabel: 'dot products bit identical on RTL',
-      line: '1 bit pixels, eight per byte: 4x the 4 bit design, and accuracy drops to 91%.',
+      line: '1 bit pixels, eight per byte: 4x the 4 bit design, and accuracy drops to 91%. This exact model is also compiled into logic as its own chip: 80 MAC per clock.',
       layout: 'its own 1x1 tile (render above is the 4 bit design) · 82.5% utilization · +5.52 ns slack at 50 MHz, slow corner · DRC 0, LVS 0',
       measured: 'Measured: all 3,600 dot products matched Python bit for bit on the RTL (29,320 chip clocks, a quarter of the 4 bit design). The layout passed the official Tiny Tapeout flow, the gate netlist passed 7 of 7 tests including this classifier, and a k-induction proof shows the output queue never drops a result.' }
   };
